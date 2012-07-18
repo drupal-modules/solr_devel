@@ -1,0 +1,39 @@
+<?php
+
+/**
+ * @file
+ * Provides development tools for sites using Solr.
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function devel_node_access_permission() {
+  return array(
+    'view solr_devel information' => array(
+      'description' => t('View the devel information for Solr searches. Raw data is returned by Solr meaning that sensitive data could be exposed that would normally be protected by various access control systems.'),
+      'title' => t('Access Solr Devel Information'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function solr_devel_menu() {
+  $items = array();
+
+  $items['node/%node/solr'] = array(
+    'title' => 'Solr Devel',
+    'page callback' => 'solr_devel_node_page',
+    'page arguments' => array(1),
+    'access arguments' => array('view solr_devel information'),
+    'weight' => 99,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'file' => 'solr_devel.pages.inc',
+  );
+
+  return $items;
+}
