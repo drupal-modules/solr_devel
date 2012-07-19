@@ -6,9 +6,11 @@
  */
 
 function solr_devel_node_page($node) {
-
-  // Define an environment hook and iterate over all connections.
-  // $adapter->entityIndexed();
+  $environments = solr_devel_get_environment_info();
+  foreach ($environments as $environment) {
+    $adapter = solr_devel_adapter_load($environment);
+    dpm($adapter->entityIndexed($node->nid));
+  }
 
   return array();
 }

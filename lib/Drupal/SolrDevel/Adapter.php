@@ -11,22 +11,49 @@
 abstract class Drupal_SolrDevel_Adapter {
 
   /**
+   * The label of the environment this adapter is associated with.
+   *
+   * @var string
+   */
+  protected $_label;
+
+  /**
    * An array of options, usually containing contextual information about the
    * index or server this adapter is associated with.
    *
    * @var array
    */
-  protected $_options = array();
+  protected $_options;
+
+  /**
+   * Captures any error encountered during index connections.
+   *
+   * @var string
+   */
+  protected $_error = '';
 
   /**
    * Constructs a Drupal_SolrDevel_Adapter object.
    *
+   * @param string $label
+   *   The label of the environment this adapter is associated with.
    * @param array $options
    *   An array of options, usually containing contextual information about the
    *   index or server this adapter is associated with.
    */
-  public function __construct(array $options = array()) {
+  public function __construct($label, array $options = array()) {
+    $this->_label = $label;
     $this->_options = $options;
+  }
+
+  /**
+   * Returns the human readable label of the environment associated with this
+   * adapter.
+   *
+   * @return string
+   */
+  public function getLabel() {
+    return $this->_label;
   }
 
   /**
@@ -59,6 +86,29 @@ abstract class Drupal_SolrDevel_Adapter {
    */
   public function setOption($name, $value) {
     $this->_options[$name] = $value;
+    return $this;
+  }
+
+  /**
+   * Returns any error encountered connecting to the index.
+   *
+   * @return string
+   */
+  public function getError() {
+    return $this->_error;
+  }
+
+  /**
+   * Sets an error message.
+   *
+   * @param string $error
+   *   The error being set.
+   *
+   * @return Drupal_SolrDevel_Adapter
+   *   An instance of this class.
+   */
+  public function setError($error) {
+    $this->_error = $error;
     return $this;
   }
 

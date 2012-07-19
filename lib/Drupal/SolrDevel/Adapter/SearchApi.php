@@ -8,7 +8,7 @@
 /**
  * Search API's implementation of the Solr Devel adapter.
  */
-class Drupal_SolrDevel_SearchApi_Adapter extends Drupal_SolrDevel_Adapter {
+class Drupal_SolrDevel_Adapter_SearchApi extends Drupal_SolrDevel_Adapter {
 
   /**
    * Implements Drupal_SolrDevel_Adapter::searchByEntity().
