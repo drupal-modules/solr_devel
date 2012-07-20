@@ -54,12 +54,8 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
   public function getDocument($entity_id, $entity_type) {
     try {
       $response = $this->searchByIdentifier($entity_id, $entity_type);
-      if (isset($response->response->docs[0])) {
-        return $response->response->docs[0];
-      }
-      else {
-        return FALSE;
-      }
+      $doc_returned = isset($response->response->docs[0]);
+      return ($doc_returned) ? $response->response->docs[0] : FALSE;
     }
     catch (Exception $e) {
       $this->setError($e->getMessage());
