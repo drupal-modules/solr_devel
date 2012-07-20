@@ -118,10 +118,25 @@ abstract class Drupal_SolrDevel_Adapter {
    * @param int $entity_id
    *   The unique identifier of the entity.
    * @param string $entity_type
-   *   The machine name of the entity, defaults to "node".
+   *   The machine name of the entity.
    *
    * @return boolean
    *   TRUE if the entity is indexed, FALSE otherwise.
    */
-  abstract public function entityIndexed($entity_id, $entity_type = 'node');
+  abstract public function entityIndexed($entity_id, $entity_type);
+
+  /**
+   * Tests whether the entity is queued for indexing.
+   *
+   * @param int $entity_id
+   *   The unique identifier of the entity.
+   * @param string $bundle
+   *   The entity's bundle.
+   * @param string $entity_type
+   *   The machine name of the entity.
+   *
+   * @return boolean
+   *   TRUE if the entity is queued for indexing, FALSE otherwise.
+   */
+  abstract public function entityQueued($entity_id, $bundle, $entity_type);
 }
