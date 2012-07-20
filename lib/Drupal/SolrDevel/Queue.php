@@ -46,6 +46,13 @@ abstract class Drupal_SolrDevel_Queue {
   protected $_debug = array();
 
   /**
+   * TRUE if the entity is queued for indexing, FALSE if not.
+   *
+   * @var boolean
+   */
+  protected $_status;
+
+  /**
    * Constructs a Drupal_SolrDevel_Queue object.
    *
    * @param Drupal_SolrDevel_Adapter
@@ -62,10 +69,23 @@ abstract class Drupal_SolrDevel_Queue {
     $this->_entityId = $entity_id;
     $this->_bundle = $bundle;
     $this->_entityType = $entity_type;
+
+    // Runs the queue for the entity.
+    $this->_status = $this->run();
   }
 
   /**
-   * Gets the debug information.
+   * Returns TRUE if the entity is queued for indexing, FALSE if not.
+   *
+   * @return array
+   *   An associative array containing the debug information.
+   */
+  public function getStatus() {
+    return $this->_status;
+  }
+
+  /**
+   * Gets the debug information about the entity's status in the queue.
    *
    * @return array
    *   An associative array containing the debug information.

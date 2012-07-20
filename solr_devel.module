@@ -6,11 +6,6 @@
  */
 
 /**
- * Captures the directory containing this file.
- */
-define('SOLR_DEVEL_DIRECTORY', dirname(__FILE__));
-
-/**
  * Implements hook_permission().
  */
 function devel_node_access_permission() {
@@ -29,10 +24,19 @@ function devel_node_access_permission() {
 function solr_devel_menu() {
   $items = array();
 
-  $items['node/%node/devel/apachesolr'] = array(
+  $items['node/%node/devel/solr'] = array(
     'title' => 'Solr Index',
-    'page callback' => 'solr_devel_node_page',
+    'page callback' => 'solr_devel_node_overview_page',
     'page arguments' => array(1),
+    'access arguments' => array('view solr_devel information'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'solr_devel.pages.inc',
+  );
+
+  $items['node/%node/devel/solr/%solr_devel_environment/queue'] = array(
+    'title' => 'Solr Queue Analysis',
+    'page callback' => 'solr_devel_node_queue_analysis_page',
+    'page arguments' => array(1, 4),
     'access arguments' => array('view solr_devel information'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'solr_devel.pages.inc',
@@ -72,6 +76,20 @@ function solr_devel_get_environment_info() {
     );
   }
   return $environments;
+}
+
+/**
+ * Loads an environment.
+ *
+ * @param string $id
+ *   The unique identifier of the environment.
+ *
+ * @return array|FALSE
+ *   The environment definition, FALE if not available.
+ */
+function solr_devel_environment_load($id) {
+  $environments = solr_devel_get_environment_info();
+  return isset($environments[$id]) ? $environments[$id] : FALSE;
 }
 
 /**
