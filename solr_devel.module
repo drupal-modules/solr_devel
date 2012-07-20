@@ -24,13 +24,6 @@ function devel_node_access_permission() {
 }
 
 /**
- * Implements hook_init().
- */
-function solr_devel_init() {
-  solr_devel_register_autoloader();
-}
-
-/**
  * Implements hook_menu().
  */
 function solr_devel_menu() {
@@ -46,35 +39,6 @@ function solr_devel_menu() {
   );
 
   return $items;
-}
-
-/**
- * Very basic class autoloader for our library.
- *
- * @param string $class
- *   The name of the class being autoloaded.
- */
-function solr_devel_load_class($class) {
-  if (0 === strpos($class, 'Drupal_SolrDevel_')) {
-    if (!class_exists($class, FALSE) && !interface_exists($class, FALSE)) {
-      $basename = str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
-      $file = join(DIRECTORY_SEPARATOR, array(SOLR_DEVEL_DIRECTORY, 'lib', $basename));
-      include_once $file;
-    }
-  }
-}
-
-/**
- * Registers our autoload implementation.
- *
- * @see solr_devel_load_class()
- */
-function solr_devel_register_autoloader() {
-  static $registered = FALSE;
-  if (!$registered) {
-    spl_autoload_register('solr_devel_load_class');
-    $registered = TRUE;
-  }
 }
 
 /**
