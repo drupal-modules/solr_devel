@@ -78,17 +78,18 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
 
     // Initialize the debug array.
     $this->_debug = array(
-      'read_only' => t('No'),
-      'bundle_excluded' => t('No'),
-      'in_table' => t('Yes'),
-      'processed' => t('Yes'),
+      'read_only' => FALSE,
+      'bundle_excluded' => FALSE,
+      'in_table' => TRUE,
+      'processed' => FALSE,
       'status_callbacks' => array(),
+      'status_callbacks_skipped' => array(),
       'exclude_hooks' => array(),
     );
 
     // Return FALSE if index is read only.
     if (variable_get('apachesolr_read_only', 0)) {
-      $this->_debug['read_only'] = t('Yes');
+      $this->_debug['read_only'] = TRUE;
       $queued = FALSE;
     }
 
@@ -99,7 +100,7 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
 
     // Checks whether the bundle is excluded.
     if (!isset($bundles[$this->_bundle])) {
-      $this->_debug['bundle_excluded'] = t('Yes');
+      $this->_debug['bundle_excluded'] = TRUE;
       $queued = FALSE;
     }
 
@@ -127,7 +128,7 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
 
     // If no records are returned, the item has been processed.
     if (!$record = $query->execute()->fetch()) {
-      $this->_debug['processed'] = t('Yes');
+      $this->_debug['processed'] = TRUE;
       $queued = FALSE;
     }
 
@@ -150,17 +151,17 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
           if (is_callable($status_callback)) {
             $callback_value = $status_callback($this->_entityId, $this->_entityType);
             $record->status = $record->status && $callback_value;
-            $this->_debug['status_callbacks'][$status_callback] = (!$callback_value) ? t('Excluded') : t('Not excluded');
+            $this->_debug['status_callbacks'][$status_callback] = (!$callback_value); // FALSE
           }
           else {
-            $this->_debug['status_callbacks'][$status_callback] = t('Could not be called');
+            $this->_debug['status_callbacks_skipped'][$status_callback] = TRUE;
           }
         }
       }
     }
     else {
       // There is a problem with the queue if the data is not here.
-      $this->_debug['in_table'] = t('No');
+      $this->_debug['in_table'] = FALSE;
       $queued = FALSE;
     }
 
@@ -169,11 +170,11 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
       $function = $module . '_apachesolr_exclude';
       $exclude = module_invoke($module, 'apachesolr_exclude', $record->entity_id, $this->_entityType, $record, $this->_envId);
       if (!empty($exclude)) {
-        $this->_debug['exclude_hooks'][$function] = t('Excluded');
+        $this->_debug['exclude_hooks'][$function] = TRUE;
         $queued = FALSE;
       }
       else {
-        $this->_debug['exclude_hooks'][$function] = t('Not excluded');
+        $this->_debug['exclude_hooks'][$function] = FALSE;
       }
     }
 
@@ -182,11 +183,11 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
       $function = $module . '_apachesolr_' . $this->_entityType . '_exclude';
       $exclude = module_invoke($module, 'apachesolr_' . $this->_entityType . '_exclude', $record->entity_id, $record, $this->_envId);
       if (!empty($exclude)) {
-        $this->_debug['exclude_hooks'][$function] = t('Excluded');
+        $this->_debug['exclude_hooks'][$function] = TRUE;
         $queued = FALSE;
       }
       else {
-        $this->_debug['exclude_hooks'][$function] = t('Not excluded');
+        $this->_debug['exclude_hooks'][$function] = FALSE;
       }
     }
 
