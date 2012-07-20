@@ -42,6 +42,15 @@ function solr_devel_menu() {
     'file' => 'solr_devel.pages.inc',
   );
 
+  $items['node/%node/devel/solr/%solr_devel_environment/document'] = array(
+    'title' => 'Solr Document Analysis',
+    'page callback' => 'solr_devel_node_document_analysis_page',
+    'page arguments' => array(1, 4),
+    'access arguments' => array('view solr_devel information'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'solr_devel.pages.inc',
+  );
+
   return $items;
 }
 

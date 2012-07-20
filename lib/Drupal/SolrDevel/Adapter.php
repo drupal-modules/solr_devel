@@ -143,4 +143,16 @@ abstract class Drupal_SolrDevel_Adapter {
    *   The queue object.
    */
   abstract public function getQueue($entity_id, $bundle, $entity_type);
+
+  /**
+   * Returns the document as stored in the Solr index.
+   *
+   * @param int $entity_id
+   *   The unique identifier of the entity.
+   * @param string $entity_type
+   *   The machine name of the entity.
+   *
+   * @return mixed
+   */
+  abstract public function getDocument($entity_id, $entity_type);
 }
