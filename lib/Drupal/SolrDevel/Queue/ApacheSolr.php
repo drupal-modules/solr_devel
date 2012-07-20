@@ -2,79 +2,24 @@
 
 /**
  * @file
- * Contains Drupal_SolrDevel_ApacheSolr_Queue.
+ * Contains Drupal_SolrDevel_Queue_ApacheSolr.
  */
 
 /**
- * Checks the queue status of an entity.
+ * Debugs an entity's status in the indexing queue.
  *
  * Breaks up the queue process into parts so we can analyze it. Stores debug
- * data so developers can determined why an entity is in the queue or not.
+ * data so developers can determined why an entity is or isn't queued for
+ * indexing.
  */
-class Drupal_SolrDevel_ApacheSolr_Queue {
+class Drupal_SolrDevel_Queue_ApacheSolr extends Drupal_SolrDevel_Queue {
 
   /**
-   * The machine name of the environment.
-   *
-   * @var string
-   */
-  protected $_envId;
-
-  /**
-   * The unique identifier of the entity.
-   *
-   * @var int
-   */
-  protected $_entityId;
-
-  /**
-   * The entity's bundle.
-   *
-   * @var string
-   */
-  protected $_bundle;
-
-  /**
-   * The machine name of the entity.
-   *
-   * @var string
-   */
-  protected $_entityType;
-
-  /**
-   * Stores debug information.
-   *
-   * @var array
-   */
-  protected $_debug;
-
-  /**
-   * Constructs a Drupal_SolrDevel_ApacheSolr_Queue object.
-   *
-   * @param string $env_id
-   *   The machine name of the environment.
-   * @param int $entity_id
-   *   The unique identifier of the entity.
-   * @param string $bundle
-   *   The entity's bundle.
-   * @param string $entity_type
-   *   The machine name of the entity.
-   */
-  public function __construct($env_id, $entity_id, $bundle, $entity_type) {
-    $this->_envId = $env_id;
-    $this->_entityId = $entity_id;
-    $this->_bundle = $bundle;
-    $this->_entityType = $entity_type;
-  }
-
-  /**
-   * Runs the queue
-   *
-   * @return boolean
-   *   Whether the content is queued for indexing.
+   * Implements Drupal_SolrDevel_Queue::run().
    */
   public function run() {
     $queued = TRUE;
+    $env_id = $this->_adapter->getOption('env_id');
 
     // Initialize the debug array.
     $this->_debug = array(
@@ -95,7 +40,7 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
 
     // Get bundles that are allowed to be indexed.
     $bundles = drupal_map_assoc(
-      apachesolr_get_index_bundles($this->_envId, $this->_entityType)
+      apachesolr_get_index_bundles($env_id, $this->_entityType)
     );
 
     // Checks whether the bundle is excluded.
@@ -105,7 +50,7 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
     }
 
     // Get $last_entity_id and $last_changed.
-    extract(apachesolr_get_last_index_position($this->_envId, $this->_entityType));
+    extract(apachesolr_get_last_index_position($env_id, $this->_entityType));
     $table = apachesolr_get_indexer_table($this->_entityType);
 
     // Build the queue query.
@@ -168,7 +113,7 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
     // Invoke hook_apachesolr_exclude().
     foreach (module_implements('apachesolr_exclude') as $module) {
       $function = $module . '_apachesolr_exclude';
-      $exclude = module_invoke($module, 'apachesolr_exclude', $record->entity_id, $this->_entityType, $record, $this->_envId);
+      $exclude = module_invoke($module, 'apachesolr_exclude', $record->entity_id, $this->_entityType, $record, $env_id);
       if (!empty($exclude)) {
         $this->_debug['exclude_hooks'][$function] = TRUE;
         $queued = FALSE;
@@ -181,7 +126,7 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
     // Invoke hook_apachesolr_ENTITY_TYPE_exclude().
     foreach (module_implements('apachesolr_' . $this->_entityType . '_exclude') as $module) {
       $function = $module . '_apachesolr_' . $this->_entityType . '_exclude';
-      $exclude = module_invoke($module, 'apachesolr_' . $this->_entityType . '_exclude', $record->entity_id, $record, $this->_envId);
+      $exclude = module_invoke($module, 'apachesolr_' . $this->_entityType . '_exclude', $record->entity_id, $record, $env_id);
       if (!empty($exclude)) {
         $this->_debug['exclude_hooks'][$function] = TRUE;
         $queued = FALSE;
@@ -192,15 +137,5 @@ class Drupal_SolrDevel_ApacheSolr_Queue {
     }
 
     return $queued;
-  }
-
-  /**
-   * Gets the debug information.
-   *
-   * @return array
-   *
-   */
-  public function getDebug() {
-    return $this->_debug;
   }
 }

@@ -126,6 +126,25 @@ abstract class Drupal_SolrDevel_Adapter {
   abstract public function entityIndexed($entity_id, $entity_type);
 
   /**
+   * Gets the queue object for the passed entity.
+   *
+   * The queue object check's the backend's queue for the passed entity and
+   * returns debug information to help determing why the item is or isn't queued
+   * for indexing.
+   *
+   * @param int $entity_id
+   *   The unique identifier of the entity.
+   * @param string $bundle
+   *   The entity's bundle.
+   * @param string $entity_type
+   *   The machine name of the entity.
+   *
+   * @return Drupal_SolrDevel_Queue
+   *   The queue object.
+   */
+  abstract public function getQueue($entity_id, $bundle, $entity_type);
+
+  /**
    * Tests whether the entity is queued for indexing.
    *
    * @param int $entity_id
@@ -138,5 +157,7 @@ abstract class Drupal_SolrDevel_Adapter {
    * @return boolean
    *   TRUE if the entity is queued for indexing, FALSE otherwise.
    */
-  abstract public function entityQueued($entity_id, $bundle, $entity_type);
+  public function entityQueued($entity_id, $bundle, $entity_type) {
+    return $this->getQueue($entity_id, $bundle, $entity_type)->run();
+  }
 }

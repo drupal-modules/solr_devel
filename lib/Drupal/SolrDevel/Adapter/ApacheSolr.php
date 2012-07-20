@@ -11,6 +11,13 @@
 class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
 
   /**
+   * Implements Drupal_SolrDevel_Adapter::getQueue().
+   */
+  public function getQueue($entity_id, $bundle, $entity_type) {
+    return new Drupal_SolrDevel_Queue_Apachesolr($this, $entity_id, $bundle, $entity_type);
+  }
+
+  /**
    * Implements Drupal_SolrDevel_Adapter::searchByEntity().
    */
   public function entityIndexed($entity_id, $entity_type) {
@@ -25,17 +32,5 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
       $this->setError($e->getMessage());
       return FALSE;
     }
-  }
-
-  /**
-   * Implements Drupal_SolrDevel_Adapter::entityQueued().
-   *
-   * @see apachesolr_index_get_entities_to_index()
-   * @see apachesolr_index_entities()
-   */
-  public function entityQueued($entity_id, $bundle, $entity_type) {
-    $env_id = $this->getOption('env_id');
-    $queue = new Drupal_SolrDevel_ApacheSolr_Queue($env_id, $entity_id, $bundle, $entity_type);
-    return $queue->run();
   }
 }
