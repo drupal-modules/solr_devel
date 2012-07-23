@@ -2,8 +2,12 @@ name = Solr Devel
 description = Provides development tools for sites using Solr.
 package = Development
 core = 7.x
+
 files[] = lib/Drupal/SolrDevel/Adapter/ApacheSolr.php
 files[] = lib/Drupal/SolrDevel/Adapter/SearchApi.php
 files[] = lib/Drupal/SolrDevel/Adapter.php
+files[] = lib/Drupal/SolrDevel/Documentation.php
 files[] = lib/Drupal/SolrDevel/Queue/ApacheSolr.php
 files[] = lib/Drupal/SolrDevel/Queue.php
+
+configure = admin/config/search/solr_devel
