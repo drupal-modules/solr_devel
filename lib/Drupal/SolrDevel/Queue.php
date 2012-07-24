@@ -87,8 +87,9 @@ abstract class Drupal_SolrDevel_Queue {
   /**
    * Gets the debug information about the entity's status in the queue.
    *
-   * @return array
-   *   An associative array containing the debug information.
+   * @return array|string
+   *   An associative array containing the debug information, or a string
+   *   containing the HTML output.
    */
   public function getDebug() {
     return $this->_debug;

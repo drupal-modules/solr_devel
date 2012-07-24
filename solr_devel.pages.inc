@@ -15,7 +15,11 @@
  *   The initialized render array.
  */
 function solr_devel_init_build($title = '') {
-  $build = array();
+  $build = array(
+    '#attached' => array(
+      'css' => array(drupal_get_path('module', 'solr_devel') . '/solr_devel.css')
+    ),
+  );
 
   // Adds link to return to overview page.
   if ($return = solr_devel_get_return()) {
@@ -23,6 +27,7 @@ function solr_devel_init_build($title = '') {
       '#type' => 'link',
       '#title' => t('Go back to Solr index overview'),
       '#href' => $return,
+      '#attributes' => array('class' => array('solr-devel-overview-link')),
       '#weight' => -100,
     );
   }
@@ -64,7 +69,7 @@ function solr_devel_node_overview_page(stdClass $node) {
  *   The machine name of the entity.
  */
 function solr_devel_get_entity_table($entity_id, $bundle, $entity_type) {
-  $build = array();
+  $build = solr_devel_init_build();
 
   $rows = array();
   $environments = solr_devel_get_environment_info();
@@ -133,6 +138,7 @@ function solr_devel_get_entity_table($entity_id, $bundle, $entity_type) {
     '#theme' => 'table',
     '#rows' => $rows,
     '#header' => $header,
+    '#attributes' => array('class' => array('solr-devel-overview')),
   );
 
   return $build;
@@ -154,7 +160,8 @@ function solr_devel_node_queue_analysis_page(stdClass $node, array $environment)
 
   $adapter = solr_devel_adapter_load($environment);
   $debug = $adapter->getQueue($node->nid, $node->type, 'node')->getDebug();
-  $build['debug'] = array('#markup' => kprint_r($debug, TRUE));
+  $markup = (is_array($debug)) ? kprint_r($debug, TRUE) : $debug;
+  $build['debug'] = array('#markup' => $markup);
 
   return $build;
 }

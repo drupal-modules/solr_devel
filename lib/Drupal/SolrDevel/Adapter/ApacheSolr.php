@@ -18,7 +18,8 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
    * @param string $entity_type
    *   The machine name of the entity.
    *
-   * @return
+   * @return stdClass
+   *   The response object.
    */
   public function searchByIdentifier($entity_id, $entity_type) {
     $solr = apachesolr_get_solr($this->getOption('env_id'));
