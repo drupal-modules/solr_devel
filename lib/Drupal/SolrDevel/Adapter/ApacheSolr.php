@@ -35,7 +35,7 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
   }
 
   /**
-   * Implements Drupal_SolrDevel_Adapter::searchByEntity().
+   * Implements Drupal_SolrDevel_Adapter::entityIndexed().
    */
   public function entityIndexed($entity_id, $entity_type) {
     try {
@@ -61,5 +61,39 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
       $this->setError($e->getMessage());
       return FALSE;
     }
+  }
+
+  /**
+   * Implements Drupal_SolrDevel_Adapter::analyzeQuery().
+   */
+  public function analyzeQuery($keys, $page_id, $entity_id, $entity_type) {
+    $search_page = apachesolr_search_page_load($page_id);
+    $conditions = apachesolr_search_conditions_default($search_page);
+    $solr = apachesolr_get_solr($search_page->env_id);
+
+    // Default parameters
+    $params = array(
+      'q' => $keys,
+      'fq' => isset($conditions['fq']) ? $conditions['fq'] : array(),
+      'rows' => 1,
+    );
+
+    $params['fq'][] = 'id:' . apachesolr_document_id($entity_id, $entity_type);
+    $results = apachesolr_search_run('apachesolr', $params, '', '', 0, $solr);
+    return isset($results[0]) ? $results[0] : array();
+  }
+
+  /**
+   * Implements Drupal_SolrDevel_Adapter::getSearchPageOptions().
+   */
+  public function getSearchPageOptions($environment) {
+    $options = array();
+    $env_id = ltrim(strstr($environment['name'], ':'), ':');
+    $sql = 'SELECT page_id, label FROM {apachesolr_search_page} WHERE env_id = :env_id';
+    $result = db_query($sql, array(':env_id' => $env_id));
+    foreach ($result as $record) {
+      $options[$record->page_id] = check_plain($record->label);
+    }
+    return $options;
   }
 }

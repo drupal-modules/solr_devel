@@ -155,4 +155,33 @@ abstract class Drupal_SolrDevel_Adapter {
    * @return mixed
    */
   abstract public function getDocument($entity_id, $entity_type);
+
+  /**
+   * Executes a search and anylizes a document.
+   *
+   * @param string $keys
+   *   The keywords submitted through the form.
+   * @param string $page_id
+   *   The unique identifier of the search page.
+   * @param int $entity_id
+   *   The unique identifier of the entity.
+   * @param string $entity_type
+   *   The machine name of the entity.
+   *
+   * @return array
+   *   The results, an empty array of the search did not match the node.
+   */
+  abstract public function analyzeQuery($keys, $page_id, $entity_id, $entity_type);
+
+  /**
+   * Returns an array of "search page" options.
+   *
+   * @param array $environment
+   *   The environment definition as returned by solr_devel_environment_load().
+   *
+   * @return array
+   *   An array of sanitized options that can be used directly as the #options
+   *   property in a FAPI element.
+   */
+  abstract public function getSearchPageOptions($environment);
 }

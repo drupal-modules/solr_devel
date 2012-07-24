@@ -60,6 +60,15 @@ function solr_devel_menu() {
     'file' => 'solr_devel.pages.inc',
   );
 
+  $items['node/%node/devel/solr/%solr_devel_environment/query'] = array(
+    'title' => 'Solr Query Analysis',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('solr_devel_node_query_analysis_form', 1, 4),
+    'access arguments' => array('view solr_devel information'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'solr_devel.pages.inc',
+  );
+
   return $items;
 }
 
@@ -113,6 +122,9 @@ function solr_devel_environment_load($id) {
 /**
  * Loads an adapter from an environment definition.
  *
+ * @param array $environment
+ *   The environment definition as returned by solr_devel_environment_load().
+ *
  * @return Drupal_SolrDevel_Adapter
  *   The adapter instance.
  */
@@ -124,7 +136,8 @@ function solr_devel_adapter_load(array $environment) {
  * Implements hook_apachesolr_query_alter().
  */
 function solr_devel_apachesolr_query_alter(DrupalSolrQueryInterface $query) {
-  if (variable_get('solr_devel:debug_queries', 0) && user_access('view solr_devel information')) {
+  $force = &drupal_static('solr_devel_force_query_alter', FALSE);
+  if ($force || (variable_get('solr_devel:debug_queries', 0) && user_access('view solr_devel information'))) {
     // Add the Solr debug parameter.
     $query->addParam('debugQuery', 'on');
 

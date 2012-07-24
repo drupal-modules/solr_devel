@@ -18,15 +18,26 @@ function solr_devel_init_build($title = '') {
   $build = array();
 
   // Adds link to return to overview page.
-  if (isset($_GET['destination']) && !url_is_external($_GET['destination'])) {
+  if ($return = solr_devel_get_return()) {
     $build['link'] = array(
       '#type' => 'link',
       '#title' => t('Go back to overview'),
-      '#href' => $_GET['destination'],
+      '#href' => $return,
+      '#weight' => -100,
     );
   }
 
   return $build;
+}
+
+/**
+ * Helper function to safely get the "return" attribute.
+ *
+ * @return string|FALSE
+ *   The return attribute, FALSE if it doesn't exist or is external.
+ */
+function solr_devel_get_return() {
+  return (isset($_GET['return']) && !url_is_external($_GET['return'])) ? $_GET['return'] : FALSE;
 }
 
 /**
@@ -70,23 +81,29 @@ function solr_devel_get_entity_table($entity_id, $bundle, $entity_type) {
       'operations' => '',
     );
 
-    // Initialize operations, get the
+    // Initialize operations, get the return path.
     $operations = array();
-    $destination = drupal_get_destination();
+    $return = array('return' => current_path());
 
     $operations['queue'] = array(
       'title' => t('analyze queue'),
       'href' => $entity_type . '/' . $entity_id . '/devel/solr/' . $id . '/queue',
-      'query' => $destination,
+      'query' => $return,
     );
 
     if ($indexed) {
       $operations['document'] = array(
         'title' => t('analyze document'),
         'href' => $entity_type . '/' . $entity_id . '/devel/solr/' . $id . '/document',
-        'query' => $destination,
+        'query' => $return,
       );
     }
+
+    $operations['query'] = array(
+      'title' => t('analyze query'),
+      'href' => $entity_type . '/' . $entity_id . '/devel/solr/' . $id . '/query',
+      'query' => $return,
+    );
 
     $row['operations'] = array(
       'data' => array(
@@ -156,4 +173,101 @@ function solr_devel_node_document_analysis_page($node, $environment) {
   $build['document'] = array('#markup' => kprint_r($document, TRUE));
 
   return $build;
+}
+
+/**
+ * Allows users to enter a search query for analysis on how the results would
+ * be returned.
+ *
+ * @param stdClass $node
+ *   The node being rendered.
+ * @param array $environment
+ *   The environment definition.
+ *
+ * @ingroup forms.
+ */
+function solr_devel_node_query_analysis_form($form, &$form_state, $node, $environment) {
+  $form += solr_devel_init_build();
+
+  $adapter = solr_devel_adapter_load($environment);
+  $query = (isset($_GET['query'])) ? $_GET['query'] : '';
+  $page = (isset($_GET['page'])) ? $_GET['page'] : '';
+
+  $page_options = $adapter->getSearchPageOptions($environment);
+  $form['page'] = array(
+    '#title' => t('Search page'),
+    '#access' => !empty($page_options),
+    '#type' => 'select',
+    '#options' => $page_options,
+    '#default_value' => $page,
+    '#weight' => -50,
+  );
+
+  $form['query'] = array(
+    '#title' => t('Search query'),
+    '#type' => 'textfield',
+    '#default_value' => $query,
+    '#weight' => -40,
+  );
+
+  $form['actions'] = array(
+    '#type' => 'actions',
+    '#weight' => -30,
+  );
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit query'),
+    '#submit' => array('solr_devel_node_query_analysis_form_submit'),
+  );
+
+  $return = solr_devel_get_return();
+  $options = ($return) ? array('query' => array('return' => $return)) : array();
+  $form['actions']['clear'] = array(
+    '#type' => 'link',
+    '#title' => t('Clear query'),
+    '#href' => 'node/' . $node->nid . '/devel/solr/' . $environment['name'] . '/query',
+    '#options' => $options,
+  );
+
+  $form['return'] = array(
+    '#type' => 'value',
+    '#value' => $return,
+  );
+
+  // Executes Solr query.
+  if ($query && $page) {
+    // Force the debugQuery parameter to be set.
+    $force = &drupal_static('solr_devel_force_query_alter', FALSE);
+    $force = TRUE;
+
+    // Executes search query that targets this entity specifically.
+    if ($results = $adapter->analyzeQuery($query, $page, $node->nid, 'node')) {
+      $form['results'] = array('#markup' => kprint_r($results, TRUE));
+    }
+    else {
+      $form['results'] = array('#markup' => '<p>' . t('The search query did not match this entity.') . '</p>');
+    }
+  }
+
+  return $form;
+}
+
+/**
+ * Form submission handler for solr_devel_node_query_analysis_form().
+ */
+function solr_devel_node_query_analysis_form_submit($form, &$form_state) {
+  $options = array();
+
+  if (!empty($form_state['values']['page'])) {
+    $options['query']['page'] = $form_state['values']['page'];
+  }
+  if (!empty($form_state['values']['query'])) {
+    $options['query']['query'] = $form_state['values']['query'];
+  }
+  if (!empty($form_state['values']['return'])) {
+    $options['query']['return'] = $form_state['values']['return'];
+  }
+
+  $form_state['redirect'] = array(current_path(), $options);
 }
