@@ -145,6 +145,20 @@ abstract class Drupal_SolrDevel_Adapter {
   abstract public function getQueue($entity_id, $bundle, $entity_type);
 
   /**
+   * Returns the entity as it built for indexing.
+   *
+   * @param int $entity_id
+   *   The unique identifier of the entity.
+   * @param string $entity_type
+   *   The machine name of the entity.
+   * @param array $environment
+   *   The environment definition as returned by solr_devel_environment_load().
+   *
+   * @return mixed
+   */
+  abstract public function getEntity($entity_id, $entity_type, array $environment);
+
+  /**
    * Returns the document as stored in the Solr index.
    *
    * @param int $entity_id
@@ -183,5 +197,5 @@ abstract class Drupal_SolrDevel_Adapter {
    *   An array of sanitized options that can be used directly as the #options
    *   property in a FAPI element.
    */
-  abstract public function getSearchPageOptions($environment);
+  abstract public function getSearchPageOptions(array $environment);
 }

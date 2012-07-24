@@ -28,10 +28,17 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
   }
 
   /**
-   * Implements Drupal_SolrDevel_Adapter::getQueue().
+   * Extracts the Apache Solr Search Integration environment ID from the Solr
+   * Devel environment name.
+   *
+   * @param array $environment
+   *   The environment definition as returned by solr_devel_environment_load().
+   *
+   * @return string
+   *   The Apache Solr Search Integration environment ID.
    */
-  public function getQueue($entity_id, $bundle, $entity_type) {
-    return new Drupal_SolrDevel_Queue_Apachesolr($this, $entity_id, $bundle, $entity_type);
+  public function getEnvId(array $environment) {
+    return ltrim(strstr($environment['name'], ':'), ':');
   }
 
   /**
@@ -46,6 +53,34 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
       $this->setError($e->getMessage());
       return FALSE;
     }
+  }
+
+  /**
+   * Implements Drupal_SolrDevel_Adapter::getEntity().
+   *
+   * @see apachesolr_devel().
+   */
+  public function getEntity($entity_id, $entity_type, array $environment) {
+    module_load_include('inc', 'apachesolr', 'apachesolr.index');
+
+    // Intialize the "entity".
+    $item = new stdClass();
+    $item->entity_id = $entity_id;
+    $item->entity_type = $entity_type;
+
+    // Get documents being indexed.
+    $debug = array();
+    $documents = apachesolr_index_entity_to_documents($item, $this->getEnvId($environment));
+    foreach ($documents as $document) {
+      $debug_data = array();
+      foreach ($document as $key => $value) {
+        $debug_data[$key] = $value;
+      }
+      $debug[] = $debug_data;
+    }
+
+    // Don't next the array if we don't have to.
+    return (!isset($debug[1])) ? $debug[0] : $debug;
   }
 
   /**
@@ -64,6 +99,19 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
   }
 
   /**
+   * Implements Drupal_SolrDevel_Adapter::getSearchPageOptions().
+   */
+  public function getSearchPageOptions(array $environment) {
+    $options = array();
+    $sql = 'SELECT page_id, label FROM {apachesolr_search_page} WHERE env_id = :env_id';
+    $result = db_query($sql, array(':env_id' => $this->getEnvId($environment)));
+    foreach ($result as $record) {
+      $options[$record->page_id] = check_plain($record->label);
+    }
+    return $options;
+  }
+
+  /**
    * Implements Drupal_SolrDevel_Adapter::analyzeQuery().
    */
   public function analyzeQuery($keys, $page_id, $entity_id, $entity_type) {
@@ -71,29 +119,22 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
     $conditions = apachesolr_search_conditions_default($search_page);
     $solr = apachesolr_get_solr($search_page->env_id);
 
-    // Default parameters
+    // Sets default parameters.
     $params = array(
       'q' => $keys,
       'fq' => isset($conditions['fq']) ? $conditions['fq'] : array(),
       'rows' => 1,
     );
-
     $params['fq'][] = 'id:' . apachesolr_document_id($entity_id, $entity_type);
+
     $results = apachesolr_search_run('apachesolr', $params, '', '', 0, $solr);
     return isset($results[0]) ? $results[0] : array();
   }
 
   /**
-   * Implements Drupal_SolrDevel_Adapter::getSearchPageOptions().
+   * Implements Drupal_SolrDevel_Adapter::getQueue().
    */
-  public function getSearchPageOptions($environment) {
-    $options = array();
-    $env_id = ltrim(strstr($environment['name'], ':'), ':');
-    $sql = 'SELECT page_id, label FROM {apachesolr_search_page} WHERE env_id = :env_id';
-    $result = db_query($sql, array(':env_id' => $env_id));
-    foreach ($result as $record) {
-      $options[$record->page_id] = check_plain($record->label);
-    }
-    return $options;
+  public function getQueue($entity_id, $bundle, $entity_type) {
+    return new Drupal_SolrDevel_Queue_Apachesolr($this, $entity_id, $bundle, $entity_type);
   }
 }

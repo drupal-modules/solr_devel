@@ -21,7 +21,7 @@ function solr_devel_init_build($title = '') {
   if ($return = solr_devel_get_return()) {
     $build['link'] = array(
       '#type' => 'link',
-      '#title' => t('Go back to overview'),
+      '#title' => t('Go back to Solr index overview'),
       '#href' => $return,
       '#weight' => -100,
     );
@@ -49,7 +49,7 @@ function solr_devel_get_return() {
  * @return array
  *   The render array.
  */
-function solr_devel_node_overview_page($node) {
+function solr_devel_node_overview_page(stdClass $node) {
   return solr_devel_get_entity_table($node->nid, $node->type, 'node');
 }
 
@@ -85,9 +85,9 @@ function solr_devel_get_entity_table($entity_id, $bundle, $entity_type) {
     $operations = array();
     $return = array('return' => current_path());
 
-    $operations['queue'] = array(
-      'title' => t('analyze queue'),
-      'href' => $entity_type . '/' . $entity_id . '/devel/solr/' . $id . '/queue',
+    $operations['entity'] = array(
+      'title' => t('analyze entity'),
+      'href' => $entity_type . '/' . $entity_id . '/devel/solr/' . $id . '/entity',
       'query' => $return,
     );
 
@@ -102,6 +102,12 @@ function solr_devel_get_entity_table($entity_id, $bundle, $entity_type) {
     $operations['query'] = array(
       'title' => t('analyze query'),
       'href' => $entity_type . '/' . $entity_id . '/devel/solr/' . $id . '/query',
+      'query' => $return,
+    );
+
+    $operations['queue'] = array(
+      'title' => t('analyze queue'),
+      'href' => $entity_type . '/' . $entity_id . '/devel/solr/' . $id . '/queue',
       'query' => $return,
     );
 
@@ -143,7 +149,7 @@ function solr_devel_get_entity_table($entity_id, $bundle, $entity_type) {
  * @return array
  *   The render array.
  */
-function solr_devel_node_queue_analysis_page($node, $environment) {
+function solr_devel_node_queue_analysis_page(stdClass $node, array $environment) {
   $build = solr_devel_init_build();
 
   $adapter = solr_devel_adapter_load($environment);
@@ -165,7 +171,7 @@ function solr_devel_node_queue_analysis_page($node, $environment) {
  * @return array
  *   The render array.
  */
-function solr_devel_node_document_analysis_page($node, $environment) {
+function solr_devel_node_document_analysis_page(stdClass $node, array $environment) {
   $build = solr_devel_init_build();
 
   $adapter = solr_devel_adapter_load($environment);
@@ -186,7 +192,7 @@ function solr_devel_node_document_analysis_page($node, $environment) {
  *
  * @ingroup forms.
  */
-function solr_devel_node_query_analysis_form($form, &$form_state, $node, $environment) {
+function solr_devel_node_query_analysis_form($form, &$form_state, stdClass $node, array $environment) {
   $form += solr_devel_init_build();
 
   $adapter = solr_devel_adapter_load($environment);
@@ -251,6 +257,26 @@ function solr_devel_node_query_analysis_form($form, &$form_state, $node, $enviro
   }
 
   return $form;
+}
+
+/**
+ * Allows users to see how the node is rendered for indexing.
+ *
+ * @param stdClass $node
+ *   The node being rendered.
+ * @param array $environment
+ *   The environment definition.
+ *
+ * @ingroup forms.
+ */
+function solr_devel_node_entity_analysis_page(stdClass $node, array $environment) {
+  $build = solr_devel_init_build();
+
+  $adapter = solr_devel_adapter_load($environment);
+  $entity = $adapter->getEntity($node->nid, 'node', $environment);
+  $build['entity'] = array('#markup' => kprint_r($entity, TRUE));
+
+  return $build;
 }
 
 /**
