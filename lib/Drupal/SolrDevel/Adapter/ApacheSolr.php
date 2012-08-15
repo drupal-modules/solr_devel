@@ -136,6 +136,6 @@ class Drupal_SolrDevel_Adapter_ApacheSolr extends Drupal_SolrDevel_Adapter {
    * Implements Drupal_SolrDevel_Adapter::getQueue().
    */
   public function getQueue($entity_id, $bundle, $entity_type) {
-    return new Drupal_SolrDevel_Queue_Apachesolr($this, $entity_id, $bundle, $entity_type);
+    return new Drupal_SolrDevel_Queue_ApacheSolr($this, $entity_id, $bundle, $entity_type);
   }
 }
