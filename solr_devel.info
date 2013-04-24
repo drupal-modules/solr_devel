@@ -12,3 +12,4 @@ files[] = lib/Drupal/SolrDevel/Queue/ApacheSolr.php
 files[] = lib/Drupal/SolrDevel/Queue.php
 
 configure = admin/config/search/solr_devel
+
