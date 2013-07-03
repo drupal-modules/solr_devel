@@ -1,0 +1,106 @@
+div.solr-devel-debug .krumo-root {
+  background: none;
+  border: 0;
+  margin: 4px 0px;
+}
+
+div.solr-devel-debug .krumo-root > .krumo-first,
+div.solr-devel-debug .krumo-root > .krumo-first > li > div > ul {
+  margin: 0;
+  padding: 0;
+}
+
+div.solr-devel-debug .krumo-root > .krumo-first > li > div {
+  display: none;
+}
+
+div.solr-devel-debug .krumo-element {
+  background: none;
+  border: 0;
+}
+
+div.solr-devel-debug,
+div.solr-devel-debug .krumo-expand {
+    font: 12px/1.2 Helvetica,arial,freesans,clean,sans-serif !important;
+    -moz-box-sizing: border-box;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: #fff;
+    border-radius: 3px;
+    border: 1px solid #d3d3d3;
+    box-shadow: 0px 1px 3px #ddd;
+    margin-bottom: 5px;
+    padding: 2px !important;
+}
+
+div.solr-devel-debug:active,
+div.solr-devel-debug:hover,
+div.solr-devel-debug .krumo-expand:active,
+div.solr-devel-debug .krumo-expand:hover {
+  background-color: #EAEAEA;
+  background-image: linear-gradient(#EAEAEA, #DADADA);
+  background-repeat: repeat-x;
+  border-color: #CCCCCC #CCCCCC #B5B5B5 !important;
+  text-decoration: none;
+}
+
+div.solr-devel-debug > div.solr-devel-debug-content,
+div.solr-devel-debug > div.solr-devel-debug-content pre {
+  font-family: Consolas,"Liberation Mono",Courier,monospace;
+  font-size: 11px;
+  padding: 3px;
+  color: #333;
+  line-height: 1.1em;
+  padding: 3px 8px;
+}
+
+
+div.solr-devel-debug-title {
+  cursor: pointer;
+  color: #333333;
+  cursor: pointer;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  padding: 4px;
+}
+
+div.solr-devel-debug.expanded {
+  background: #f2e9b8; /* Old browsers */
+  /* IE9 SVG, needs conditional override of 'filter' to 'none' */
+  background: linear-gradient(to bottom, #fff8d3 0%,#f2e9b8 95%); /* W3C */
+}
+
+div.solr-devel-debug hr {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: none;
+  height: 3px !important;
+  margin: 6px 0;
+}
+
+div.solr-devel-debug pre {
+  background: none !important;
+}
+
+div.solr-devel-debug .krumo-node {
+  background: none;
+  border: 0;
+}
+
+
+div.solr-devel-debug > div.solr-devel-debug-title,
+div.solr-devel-debug .krumo-expand > a {
+  background: url('../images/arrow-right.png') 2px center no-repeat;
+  padding-left: 20px;
+}
+div.solr-devel-debug.expanded > div.solr-devel-debug-title,
+div.solr-devel-debug .krumo-opened > a {
+  background: url('../images/arrow-down.png') 2px center no-repeat;
+}
+
+div.solr-devel-debug .krumo-footnote {
+  display: none;
+}
+
+div.solr-devel-debug-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+}
