@@ -225,3 +225,304 @@ function solr_devel_block_view($delta = '') {
     }
   }
 }
+
+/**
+ * Implements hook_search_api_solr_search_results_alter().
+ */
+function solr_devel_search_api_solr_search_results_alter(&$results, $query, $response) {
+
+  $options = $query->getOptions();
+
+  if (variable_get('solr_devel:logging_responses_enabled', FALSE)
+      && user_access('view solr_devel information')) {
+    // Logging Solr query result to the watchdog.
+    watchdog(
+      'Solr Devel', '<b>@search_id</b>: Got response from Solr (@timems): <br />' .
+      kprint_r($query, TRUE),
+      array(
+        '@time' => $response->debug->timing->time,
+        '@search_id' => $options['search id'],
+      ),
+      WATCHDOG_INFO
+    );
+  }
+
+  if (variable_get('solr_devel:debugging_result_full_response_enabled', FALSE)
+      && user_access('view solr_devel information')) {
+    // Displaying full Solr reponse array.
+    drupal_set_message(
+      solr_devel_html_collapsible(
+        t('<b>@search_id</b>: Solr result full response', array(
+          '@search_id' => $options['search id'],
+        )),
+        '<div class="solr-devel-debug-scroll">' . dprint_r($response, TRUE) . '</div>'
+      )
+    );
+  }
+
+  if (variable_get('solr_devel:debugging_result_spellcheck_enabled', FALSE)
+      && user_access('view solr_devel information')) {
+    if (isset($response->spellcheck)) {
+      // Displaying spellchecker information from the response.
+      drupal_set_message(
+        solr_devel_html_collapsible(
+          t('Solr result spellcheck'),
+          kprint_r($response->spellcheck, TRUE)
+        )
+      );
+    }
+  }
+
+  if (isset($response->debug->explain)) {
+    $explains = array_values((array) $response->debug->explain);
+  }
+  else {
+    $explains = array();
+  }
+
+  $num_records    = count($results['results']);
+
+  if (variable_get('solr_devel:debugging_results_enabled', FALSE)
+      && user_access('view solr_devel information')) {
+    // Displaying records from the response.
+    $index = 0;
+    $result_html = '';
+
+    foreach ($results['results'] as $id => $record) {
+      // Checking for the explain availability.
+      if (!empty($explains)) {
+        $explain = '<div class="solr-devel-debug-scroll"><pre>' . $explains[$index] . '</pre></div>';
+      }
+      else {
+        $explain = t('No explain available');
+      }
+
+      $result_html .= solr_devel_html_collapsible(
+        t(
+          '<b>@num</b> / @of',
+          array('@num' => $index + 1, '@of' => $num_records)
+        ),
+        solr_devel_html_collapsible(
+          t('Explain'), $explain) . '<hr/>' . kprint_r($record, TRUE)
+      );
+
+      ++$index;
+    }
+
+    drupal_set_message(
+      solr_devel_html_collapsible(
+        t('<b>@search_id</b>: Solr query returned <b>@num</b> record(s) and takes <b>@processing_time</b>', array(
+          '@num' => $num_records,
+          '@processing_time' => t('@timems', array('@time' => $response->debug->timing->time)),
+          '@search_id' => $options['search id'],
+        )),
+        $result_html
+      )
+    );
+  }
+
+  if (variable_get('solr_devel:debugging_results_process_time', FALSE)
+      && user_access('view solr_devel information')) {
+    // Displaying Solr result processing time.
+    drupal_set_message(
+      solr_devel_html_collapsible(
+        t('<b>@search_id</b>: Solr result processing time', array(
+          '@search_id' => $options['search id'],
+        )),
+        $response->debug->timing->time . 'ms',
+        TRUE
+      )
+    );
+  }
+
+  if ((variable_get('solr_devel:debugging_result_boosts_enabled', FALSE)
+    || variable_get('solr_devel:debugging_result_boosts_human_readable', FALSE)
+    || variable_get('solr_devel:debugging_result_boosts_expand', FALSE))
+    && !empty($explains) && user_access('view solr_devel information')) {
+    // Displaying records' boosts.
+    $boosts_html = '';
+    $index = 0;
+    $max_boost = 0;
+
+    // Calculating highest boost.
+    foreach ($results['results'] as $id => $record) {
+      $max_boost = max($max_boost, $results['results'][$id]['score']);
+    }
+
+    foreach ($results['results'] as $id => $record) {
+      $explain = $explains[$index];
+
+      if (variable_get('solr_devel:debugging_result_boosts_human_readable', FALSE)) {
+        // Removing unneeded parts.
+        $explain = preg_replace('/^(\s*\d+(\.[a-z_\:\-E\d]+)* = [^\(]{1,1}[^\r\n]*[\r\n]*|\s*\([^\n\r]+[\n\r]+|\)[^\n\r]*[\n\r]*)/m', '', $explain);
+
+        // More readable numbers.
+        $explain = preg_replace_callback(
+          '/(\d+\.[\dE\-]+)\s*=/',
+          create_function(
+              '$matches',
+              'return number_format((float)$matches[0], 4, ".", "") . " =";'
+          ),
+          $explain
+        );
+
+        $explain = htmlentities($explain);
+
+        // Bolding boosts.
+        $explain = preg_replace(
+          '/^(\s*)(\d+(\.[a-z_\:\-E\d]+)*)( = \({1,1}[^\r\n]*[\r\n]*)/m',
+          "\\1 <b>\\2</b> \\4",
+          $explain
+        );
+      }
+
+      $explain = str_replace('  ', '&nbsp;&nbsp;', $explain);
+
+      if (variable_get('solr_devel:debugging_result_boosts_human_readable', FALSE)) {
+        // Colorizing field names.
+        $explain = preg_replace(
+          '/(\()([a-z_\:]+)(.*?)(\s*in)/s',
+          "\\1<span style='font-weight:bold; color:#a48'>\\2</span>\\3\\4",
+          $explain
+        );
+      }
+
+      $explain = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "", $explain);
+      $explain = nl2br($explain);
+
+      $fields = $results['results'][$id]['fields'];
+
+      if (isset($fields['title'])) {
+        $item_title = $fields['title'];
+      }
+      elseif (isset($fields['nid'])) {
+        $item_title = $fields['nid'];
+      }
+      else {
+        $item_title = $record['id'];
+      }
+
+      $boosts_html .= solr_devel_html_collapsible(
+        t('<b>@num</b> / @of, Score: <b>@score</b> (<b>@score_prc</b> %), Title: "<b>@title</b>"', array(
+          '@num' => $index + 1,
+          '@of' => $num_records,
+          '@score' => $results['results'][$id]['score'],
+          '@score_prc' => ceil(100.0 / $max_boost * $results['results'][$id]['score']),
+          '@title' => $item_title,
+        )),
+        '<div class="solr-devel-debug-scroll">' . $explain . '</div>',
+        FALSE
+      );
+
+      ++$index;
+    }
+
+    drupal_set_message(
+      solr_devel_html_collapsible(
+        t('<b>@search_id</b>: Solr result boosts', array(
+          '@search_id' => $options['search id'],
+        )),
+        $boosts_html,
+        variable_get('solr_devel:debugging_result_boosts_expand', FALSE)
+      )
+    );
+  }
+
+}
+
+/**
+ * Implements hook_search_api_solr_query_alter().
+ */
+function solr_devel_search_api_solr_query_alter(&$call_args, SearchApiQueryInterface $query) {
+
+  $options = &$query->getOptions();
+
+  $original_keywords = $call_args['query'];
+
+  $query_debug_html = '';
+
+  if (user_access('view solr_devel information') && (
+    variable_get('solr_devel:debugging_result_boosts_enabled', FALSE) ||
+    variable_get('solr_devel:debugging_result_boosts_expand', FALSE) ||
+    variable_get('solr_devel:debugging_result_boosts_human_readable', FALSE) ||
+    variable_get('solr_devel:debugging_results_enabled', FALSE)) ||
+    variable_get('solr_devel:debugging_result_spellcheck_enabled', FALSE) ||
+    variable_get('solr_devel:debugging_result_full_response_enabled', FALSE) ||
+    variable_get('solr_devel:debugging_results_process_time', FALSE)) {
+    // Enabling Solr debug.
+    // Solr 4.
+    $call_args['params']['debug']      = 'true';
+
+    // Solr 3.x.
+    $call_args['params']['debugQuery'] = 'on';
+  }
+
+  if (variable_get('solr_devel:debugging_queries_enabled', FALSE)
+      && user_access('view solr_devel information')) {
+    // Displaying full Solr query.
+    $query_debug_html .= kprint_r($call_args, TRUE);
+
+    drupal_set_message(
+      solr_devel_html_collapsible(
+        t('<b>@search_id</b>: Solr query: "<b>@keywords</b>"', array(
+          '@keywords' => $original_keywords,
+          '@search_id' => $options['search id'],
+        )),
+        $query_debug_html
+      )
+    );
+  }
+
+  if (variable_get('solr_devel:logging_queries_enabled', FALSE)
+    && user_access('view solr_devel information')) {
+    // Logging Solr query to the watchdog.
+    $server_options = $query->getIndex()->server()->options;
+    // URL of the query may be handy.
+    $server_host = 'http://' . $server_options['host'] . ':' . $server_options['port'] . $server_options['path'];
+
+    watchdog(
+      'Solr Devel', 'Sent query (@keywords) for <b>@search_id</b>: <br />!url<br />'
+      . kprint_r($call_args, TRUE),
+      array(
+        '@keywords' => $original_keywords,
+        '@search_id' => $options['search id'],
+        '!url' => l(t('Test query'), $server_host . '/select?' .
+          preg_replace('/%5B[0-9]+%5D/simU', '', http_build_query(
+            array_merge(
+              array('q' => $call_args['query']),
+              array('rows' => isset($call_args['limit']) ? $call_args['limit'] : 10),
+              $call_args['params']
+            )
+          )
+        )),
+      ),
+      WATCHDOG_INFO
+    );
+  }
+}
+
+
+/**
+ * Generates collapsible frame with custom HTML inside.
+ *
+ * @param string $title
+ *   Title of the container.
+ * @param string $html
+ *   Container HTML content.
+ * @param bool $opened
+ *   Indicates whether container should be initially expanded.
+ *
+ * @return string
+ *   Resulting HTML code.
+ */
+function solr_devel_html_collapsible($title, $html, $opened = FALSE) {
+  drupal_add_js(drupal_get_path('module', 'solr_devel') . '/includes/solr_devel-debug.js');
+  drupal_add_css(drupal_get_path('module', 'solr_devel') . '/includes/solr_devel-debug.css');
+
+  $code = '<div class="solr-devel-debug' . ($opened ? ' expanded' : '') . '">';
+  $code .= '<div class="solr-devel-debug-title">' . $title . '</div>';
+  $code .= '<div class="solr-devel-debug-content">' . $html . '</div>';
+  $code .= '</div>';
+
+  return $code;
+}

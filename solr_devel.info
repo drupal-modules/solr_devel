@@ -4,6 +4,8 @@ dependencies[] = devel
 package = Development
 core = 7.x
 
+enhances[] = search_api_solr
+
 files[] = lib/Drupal/SolrDevel/Adapter/ApacheSolr.php
 files[] = lib/Drupal/SolrDevel/Adapter/SearchApi.php
 files[] = lib/Drupal/SolrDevel/Adapter.php
