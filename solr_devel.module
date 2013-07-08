@@ -490,7 +490,7 @@ function solr_devel_search_api_solr_query_alter(&$call_args, SearchApiQueryInter
           preg_replace('/%5B[0-9]+%5D/simU', '', http_build_query(
             array_merge(
               array('q' => $call_args['query']),
-              array('rows' => $call_args['limit']),
+              array('rows' => isset($call_args['limit']) ? $call_args['limit'] : 10),
               $call_args['params']
             )
           )
